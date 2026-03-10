@@ -16,5 +16,7 @@ export async function loginAs(page: Page, user: { username: string; password: st
   await page.getByTestId('login-submit').click()
   // Confirmar que estamos autenticados viendo el usuario en el header.
   await expect(page.locator('.layout-username')).toHaveText(user.username, { timeout: 15000 })
+  // Esperar a que getMe() complete (evita race donde logout por getMe fallido borra el token)
+  await page.waitForLoadState('networkidle')
 }
 

@@ -15,6 +15,7 @@ import SiteList from './pages/SiteList'
 import ServiceCategoryList from './pages/ServiceCategoryList'
 import ServiceSubCategoryList from './pages/ServiceSubCategoryList'
 import ChangePassword from './pages/ChangePassword'
+import ForgotPassword from './pages/ForgotPassword'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation()
@@ -28,6 +29,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route
         path="/"
         element={

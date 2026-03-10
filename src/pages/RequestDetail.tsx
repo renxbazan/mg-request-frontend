@@ -117,6 +117,20 @@ export default function RequestDetail() {
         <p><strong>{t('requests.assignedStaff')}:</strong> {request.assignedStaffName ?? '-'}</p>
         <p><strong>{t('requests.priority')}:</strong> <PriorityBadge priority={request.priority} /></p>
         <p><strong>{t('requests.date')}:</strong> {request.createDate ? new Date(request.createDate).toLocaleString() : '-'}</p>
+        {request.attachments != null && request.attachments.length > 0 && (
+          <div style={{ marginTop: 'var(--spacing-md)' }}>
+            <p><strong>{t('requests.photos')}:</strong></p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {request.attachments.map((att) => (
+                att.url ? (
+                  <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
+                    <img src={att.url} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 8, border: '1px solid #eee' }} />
+                  </a>
+                ) : null
+              ))}
+            </div>
+          </div>
+        )}
         {status === 'RATED' && request.rating != null && (
           <p><strong>{t('requests.rating')}:</strong> <StarRating value={request.rating} readOnly /></p>
         )}

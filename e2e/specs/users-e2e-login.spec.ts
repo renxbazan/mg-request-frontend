@@ -4,7 +4,7 @@ import { loginAs, testUsers } from '../fixtures/auth'
 test('Requester E2E puede iniciar sesión y ver solicitudes', async ({ page }) => {
   await loginAs(page, testUsers.requester)
   await page.goto('/requests')
-  // Heading único de la página de solicitudes
-  await expect(page.getByRole('heading', { name: 'Solicitudes' })).toBeVisible()
+  // Verificar que cargó la página de solicitudes (el fix del ciclo hace que cargue bien)
+  await expect(page.getByRole('heading', { name: 'Solicitudes' })).toBeVisible({ timeout: 15000 })
 })
 

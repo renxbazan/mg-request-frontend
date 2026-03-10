@@ -11,12 +11,12 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: 'only-on-failure',
   },
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { browserName: 'chromium' },
     },
   ],
   globalSetup: './e2e/global-setup.ts',

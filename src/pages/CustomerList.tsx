@@ -8,6 +8,7 @@ import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
+import IconButton from '../components/IconButton'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
 
@@ -158,7 +159,7 @@ export default function CustomerList() {
       {list.length === 0 ? (
         <Card><p style={{ margin: 0 }}>{t('customers.noItems')}</p></Card>
       ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
+        <Card style={{ padding: 0, overflow: 'visible' }}>
           <div className="table-responsive">
             <table>
               <thead>
@@ -180,9 +181,11 @@ export default function CustomerList() {
                     <td>{c.companyId != null ? (companyById[c.companyId]?.name ?? c.companyId) : '-'}</td>
                     <td>{c.employee ? t('customers.yes') : t('customers.no')}</td>
                     <td>
-                      <Button variant="secondary" onClick={() => openEdit(c)} style={{ marginRight: 8, padding: '6px 12px' }}>{t('common.edit')}</Button>
-                      <Button variant="secondary" onClick={() => navigate('/admin/users', { state: { prefillCustomerId: c.id } })} style={{ marginRight: 8, padding: '6px 12px' }}>{t('customers.createUser')}</Button>
-                      <Button variant="danger" onClick={() => handleDelete(c)} style={{ padding: '6px 12px' }}>{t('common.delete')}</Button>
+                      <div className="table-actions">
+                        <IconButton icon="edit" title={t('common.edit')} variant="secondary" onClick={() => openEdit(c)} />
+                        <IconButton icon="userPlus" title={t('customers.createUser')} variant="secondary" onClick={() => navigate('/admin/users', { state: { prefillCustomerId: c.id } })} />
+                        <IconButton icon="delete" title={t('common.delete')} variant="danger" onClick={() => handleDelete(c)} />
+                      </div>
                     </td>
                   </tr>
                 ))}

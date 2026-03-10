@@ -18,13 +18,25 @@
     "persons": "Persons",
     "users": "Users",
     "myAccount": "My account",
+    "settings": "Settings",
     "logout": "Log out"
   },
   "login": {
     "title": "MG Request",
+    "titleText": "Request",
     "subtitle": "Sign in",
+    "signInToContinue": "Sign in to continue",
     "username": "Username",
     "password": "Password",
+    "usernamePlaceholder": "you@email.com",
+    "passwordPlaceholder": "Your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot your password?",
+    "forgotPasswordTitle": "Recover password",
+    "forgotPasswordMessage": "Contact your company administrator to recover access to your account.",
+    "backToLogin": "Back to login",
     "submit": "Sign in",
     "submitting": "Signing in...",
     "error": "Sign in error"
@@ -48,7 +60,11 @@
     "errorDelete": "Error deleting",
     "forbidden": "You do not have permission to perform this action.",
     "new": "New",
-    "back": "Back"
+    "back": "Back",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "perPage": "per page"
   },
   "home": {
     "welcome": "Welcome, {{username}}",
@@ -56,6 +72,27 @@
     "viewRequests": "View requests",
     "newRequest": "New request",
     "catalogs": "Catalogs"
+  },
+  "dashboard": {
+    "dateRange": "Period",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "last3Months": "Last 3 months",
+    "last6Months": "Last 6 months",
+    "thisYear": "This year",
+    "lastYear": "Last year",
+    "all": "All time",
+    "byStatus": "By status",
+    "byPriority": "By priority",
+    "ratingsByWorker": "Ratings by worker",
+    "count": "Count",
+    "ratedRequests": "Rated requests",
+    "noData": "No requests in the selected period yet.",
+    "noRatings": "No ratings yet.",
+    "byCompanyAndSite": "By company and site",
+    "company": "Company",
+    "site": "Site",
+    "total": "Total"
   },
   "companies": {
     "title": "Companies",
@@ -213,7 +250,10 @@
     "priorityHigh": "High",
     "createRequest": "Create request",
     "saving": "Saving...",
-    "errorCreate": "Error creating"
+    "errorCreate": "Error creating",
+    "photos": "Photos",
+    "addPhotos": "Add photos",
+    "photosHint": "Max {{max}} photos. On mobile you can take a picture."
   },
   "changePassword": {
     "title": "Change my password",

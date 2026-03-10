@@ -29,14 +29,21 @@ function NavDropdown({ label, children, open, onToggle }: { label: string; child
     return () => document.removeEventListener('click', handler)
   }, [open, onToggle])
   return (
-    <div className="layout-nav-dropdown" ref={ref}>
+    <div className={`layout-nav-dropdown ${open ? 'open' : ''}`} ref={ref}>
       <button type="button" className={`layout-nav-dropdown-trigger ${open ? 'open' : ''}`} onClick={onToggle} aria-expanded={open}>
         {label}
         <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 5l4 4 4-4" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
-      {open && <div className="layout-nav-dropdown-panel">{children}</div>}
+      <div className="layout-nav-dropdown-panel">{children}</div>
     </div>
   )
+}
+
+function getInitials(username: string): string {
+  if (!username) return '?'
+  const parts = username.split(/[@.]/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase().slice(0, 2)
+  return username.slice(0, 2).toUpperCase()
 }
 
 export default function Layout() {
@@ -46,6 +53,16 @@ export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [menuItems, setMenuItems] = useState<MenuItemDTO[]>([])
   const [dropdownOpenIndex, setDropdownOpenIndex] = useState<number | null>(null)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node) && userMenuOpen) setUserMenuOpen(false)
+    }
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [userMenuOpen])
 
   useEffect(() => {
     if (!user) {
@@ -75,8 +92,8 @@ export default function Layout() {
     <div className="layout">
       <header className="layout-header">
         <Link to="/" className="layout-logo-link" aria-label={t('nav.home')}>
-          <img src="/logo.png" alt="MG" className="layout-logo" />
-          <span>MG Request</span>
+          <img src="/mg-isotype.svg" alt="MG" className="layout-logo-isotype" />
+          <span className="layout-logo-text">{t('login.titleText')}</span>
         </Link>
 
         {/* Desktop nav: dinámico desde API (primer grupo = enlaces directos, resto = dropdowns) */}
@@ -120,12 +137,34 @@ export default function Layout() {
           </svg>
         </button>
 
-        <div className="layout-user">
-          <NavLinkItem to="/change-password" className="layout-nav-link-desktop" testId="menu-link-/change-password">{t('nav.myAccount')}</NavLinkItem>
-          <span className="layout-username">{user?.username}</span>
-          <button type="button" className="layout-logout-btn" onClick={handleLogout}>
-            {t('nav.logout')}
+        <div className="layout-user" ref={userMenuRef}>
+          <button
+            type="button"
+            className={`layout-user-trigger ${userMenuOpen ? 'open' : ''}`}
+            onClick={() => setUserMenuOpen((o) => !o)}
+            aria-expanded={userMenuOpen}
+            aria-haspopup="true"
+          >
+            <span className="layout-user-avatar" aria-hidden="true">
+              {user ? getInitials(user.username) : '?'}
+            </span>
+            <span className="layout-username">{user?.username}</span>
+            <svg className="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
+          <div className={`layout-user-dropdown ${userMenuOpen ? 'open' : ''}`}>
+            <NavLinkItem to="/change-password" className="layout-user-dropdown-item" testId="menu-link-/change-password" onClick={() => setUserMenuOpen(false)}>
+              {t('nav.myAccount')}
+            </NavLinkItem>
+            <Link to="/change-password" className="layout-user-dropdown-item" onClick={() => setUserMenuOpen(false)}>
+              {t('nav.settings')}
+            </Link>
+            <div className="layout-user-dropdown-divider" aria-hidden="true" />
+            <button type="button" className="layout-user-dropdown-item logout" onClick={() => { setUserMenuOpen(false); handleLogout() }}>
+              {t('nav.logout')}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -167,7 +206,8 @@ export default function Layout() {
             <div className="layout-nav-group-title">{t('nav.user')}</div>
             <div className="layout-nav-group-links">
               <NavLinkItem to="/change-password" className="layout-nav-link" onClick={closeDrawer}>{t('nav.myAccount')}</NavLinkItem>
-              <button type="button" className="layout-nav-link" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', font: 'inherit', cursor: 'pointer' }} onClick={handleLogout}>
+              <NavLinkItem to="/change-password" className="layout-nav-link" onClick={closeDrawer}>{t('nav.settings')}</NavLinkItem>
+              <button type="button" className="layout-nav-link" style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', font: 'inherit', cursor: 'pointer', color: 'var(--color-danger)' }} onClick={handleLogout}>
                 {t('nav.logout')}
               </button>
             </div>

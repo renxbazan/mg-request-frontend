@@ -85,4 +85,22 @@ export async function apiCreateUser(
   return (data as { id: number }).id
 }
 
+/** Crea una solicitud vía API (site 1, category 1 del seed). Retorna { id, description }. */
+export async function apiCreateRequest(
+  token: string,
+  description: string,
+): Promise<{ id: number; description: string }> {
+  const data = await apiFetch('/api/requests', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      siteId: 1,
+      serviceCategoryId: 1,
+      description,
+      priority: 'M',
+    }),
+  })
+  return { id: (data as { id: number }).id, description }
+}
+
 

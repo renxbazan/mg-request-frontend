@@ -11,6 +11,11 @@ export interface RequestHistoryDto {
   userName?: string | null
 }
 
+export interface RequestAttachmentDto {
+  id: number
+  url: string | null
+}
+
 export interface RequestDto {
   id: number
   serviceCategoryId: number
@@ -29,6 +34,7 @@ export interface RequestDto {
   createDate: string
   priority: string | null
   history?: RequestHistoryDto[]
+  attachments?: RequestAttachmentDto[]
 }
 
 export interface RequestCreateDto {
@@ -40,12 +46,30 @@ export interface RequestCreateDto {
   priority?: string
 }
 
+export interface PageResult<T> {
+  items: T[]
+  page: number
+  size: number
+  totalElements: number
+  totalPages: number
+}
+
 export const requestsApi = {
-  list: () => api.get<RequestDto[]>('/api/requests'),
+  list: (params?: { page?: number; size?: number; status?: string; priority?: string; companyId?: number }) => {
+    const search = new URLSearchParams()
+    if (params?.page != null) search.set('page', String(params.page))
+    if (params?.size != null) search.set('size', String(params.size))
+    if (params?.status) search.set('status', params.status)
+    if (params?.priority) search.set('priority', params.priority)
+    if (params?.companyId != null) search.set('companyId', String(params.companyId))
+    const qs = search.toString()
+    return api.get<PageResult<RequestDto>>(`/api/requests${qs ? `?${qs}` : ''}`)
+  },
   my: () => api.get<RequestDto[]>('/api/requests/my'),
   assigned: () => api.get<RequestDto[]>('/api/requests/assigned'),
   get: (id: number) => api.get<RequestDto>(`/api/requests/${id}`),
   create: (body: RequestCreateDto) => api.post<RequestDto>('/api/requests', body),
+  createWithAttachments: (formData: FormData) => api.postFormData<RequestDto>('/api/requests/with-attachments', formData),
   approve: (id: number) => api.put<RequestDto>(`/api/requests/${id}/approve`),
   reject: (id: number) => api.put<RequestDto>(`/api/requests/${id}/reject`),
   attend: (id: number) => api.put<RequestDto>(`/api/requests/${id}/attend`),

@@ -22,7 +22,7 @@
   --spacing-lg: 24px;
   --font: 'DM Sans', system-ui, -apple-system, sans-serif;
   --max-content: 1200px;
-  --header-height: 56px;
+  --header-height: 64px;
 }
 
 * {
@@ -121,11 +121,62 @@ body {
   font-size: 13px !important;
 }
 
+.btn-icon {
+  padding: 8px !important;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.btn-icon svg {
+  display: block;
+}
+
+/* Tooltip en IconButton: usa data-tooltip + ::after para mostrar al instante en hover */
+.btn-with-tooltip {
+  position: relative;
+}
+
+.btn-with-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  background: #1a1a1a;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-with-tooltip:hover::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  border: 5px solid transparent;
+  border-top-color: #1a1a1a;
+  z-index: 1000;
+  pointer-events: none;
+}
+
 .table-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing);
   align-items: center;
+  position: relative;
+}
+
+/* Permitir que los tooltips de IconButton se vean fuera de celdas/tablas */
+td .table-actions {
+  overflow: visible;
 }
 
 .td-actions {
@@ -134,19 +185,19 @@ body {
 
 .input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   font-family: var(--font);
   font-size: 15px;
-  border: 1px solid #ddd;
-  border-radius: var(--radius-sm);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   background: var(--color-white);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--color-secondary);
-  box-shadow: 0 0 0 3px rgba(97, 161, 217, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(16, 50, 106, 0.12);
 }
 
 .input::placeholder {

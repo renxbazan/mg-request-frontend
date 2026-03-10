@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="120 -8 365 198" role="img" aria-hidden="true">
+  <defs>
+    <style>
+      .dark { fill: #1F3A68; }
+      .light { fill: #7FA3D6; }
+    </style>
+  </defs>
+  <path class="dark" d="M157 182V98c0-37 29-66 66-66 22 0 41 9 54 25 13-16 32-25 54-25h80v28h-80c-23 0-38 15-38 38v84h-28V98c0-23-15-38-38-38s-38 15-38 38v84z"/>
+  <path class="light" d="M355 116h89v14c0 44-36 80-80 80-20 0-35-4-48-12v-27c13 7 27 11 46 11 25 0 46-15 53-38h-60z"/>
+</svg>

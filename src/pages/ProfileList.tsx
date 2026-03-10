@@ -5,6 +5,7 @@ import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
+import IconButton from '../components/IconButton'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
 
@@ -90,7 +91,7 @@ export default function ProfileList() {
       {list.length === 0 ? (
         <Card><p style={{ margin: 0 }}>{t('profiles.noItems')}</p></Card>
       ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
+        <Card style={{ padding: 0, overflow: 'visible' }}>
           <div className="table-responsive">
             <table>
               <thead>
@@ -106,8 +107,10 @@ export default function ProfileList() {
                     <td>{p.id}</td>
                     <td>{p.description}</td>
                     <td>
-                      <Button variant="secondary" onClick={() => openEdit(p)} style={{ marginRight: 8, padding: '6px 12px' }}>{t('common.edit')}</Button>
-                      <Button variant="danger" onClick={() => handleDelete(p)} style={{ padding: '6px 12px' }}>{t('common.delete')}</Button>
+                      <div className="table-actions">
+                        <IconButton icon="edit" title={t('common.edit')} variant="secondary" onClick={() => openEdit(p)} />
+                        <IconButton icon="delete" title={t('common.delete')} variant="danger" onClick={() => handleDelete(p)} />
+                      </div>
                     </td>
                   </tr>
                 ))}

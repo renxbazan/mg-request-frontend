@@ -8,7 +8,9 @@ import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
+import IconButton from '../components/IconButton'
 import PriorityBadge from '../components/PriorityBadge'
+import Pagination from '../components/Pagination'
 
 const STATUS_KEYS: Record<string, string> = {
   PENDING_APPROVAL: 'requests.statusPendingApproval',
@@ -27,7 +29,7 @@ function RequestTable({ list }: { list: RequestDto[] }) {
   const { t } = useTranslation()
   if (list.length === 0) return <Card><p style={{ margin: 0 }}>{t('requests.noItems')}</p></Card>
   return (
-    <Card style={{ padding: 0, overflow: 'hidden' }}>
+    <Card style={{ padding: 0, overflow: 'visible' }}>
       <div className="table-responsive">
         <table>
           <thead>
@@ -57,9 +59,7 @@ function RequestTable({ list }: { list: RequestDto[] }) {
                 <td><PriorityBadge priority={r.priority} /></td>
                 <td>{r.createDate ? new Date(r.createDate).toLocaleDateString() : '-'}</td>
                 <td>
-                  <Link to={`/requests/${r.id}`} style={{ color: 'var(--color-secondary)', textDecoration: 'none', fontWeight: 500 }} data-testid={`requests-open-${r.id}`}>
-                    {t('requests.viewActions')}
-                  </Link>
+                  <IconButton icon="view" title={t('requests.viewActions')} variant="ghost" to={`/requests/${r.id}`} data-testid={`requests-open-${r.id}`} />
                 </td>
               </tr>
             ))}
@@ -88,6 +88,8 @@ export default function RequestList() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [list, setList] = useState<RequestDto[]>([])
+  const [listPage, setListPage] = useState(0)
+  const [listTotalPages, setListTotalPages] = useState(0)
   const [myList, setMyList] = useState<RequestDto[]>([])
   const [assignedList, setAssignedList] = useState<RequestDto[]>([])
   const [companies, setCompanies] = useState<{ id: number; name: string }[]>([])
@@ -97,20 +99,37 @@ export default function RequestList() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [companyFilter, setCompanyFilter] = useState('all')
+  const [pageSize, setPageSize] = useState(10)
 
   const isAdmin = user && (user.profileId === SUPER_ADMIN_PROFILE_ID || user.profileId === COMPANY_ADMIN_PROFILE_ID)
   const showAssignedTab = user && (user.profileId === SUPER_ADMIN_PROFILE_ID || user.employee === true)
+
+  const PAGE_SIZE_OPTIONS = [5, 10, 25, 50]
+
+  // companyId para admin (companies se carga async; evita ciclo con companies en deps)
+  const companyIdForFetch = isAdmin && companyFilter !== 'all'
+    ? companies.find((c) => c.name === companyFilter)?.id
+    : undefined
 
   useEffect(() => {
     setLoading(true)
     setError('')
     if (isAdmin) {
-      const promises: Promise<RequestDto[]>[] = [requestsApi.list()]
+      const listParams = {
+        page: listPage,
+        size: pageSize,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+        companyId: companyIdForFetch,
+      }
+      const promises: Promise<unknown>[] = [requestsApi.list(listParams)]
       if (showAssignedTab) promises.push(requestsApi.assigned())
       Promise.all(promises)
         .then((results) => {
-          setList(results[0])
-          if (showAssignedTab && results.length > 1) setAssignedList(results[1])
+          const pageResult = results[0] as { items: RequestDto[]; totalPages: number }
+          setList(pageResult.items ?? [])
+          setListTotalPages(pageResult.totalPages ?? 0)
+          if (showAssignedTab && results.length > 1) setAssignedList(results[1] as RequestDto[])
           else setAssignedList([])
         })
         .catch((err) => setError(getApiErrorMessage(err, t, t('common.errorSave'))))
@@ -126,7 +145,13 @@ export default function RequestList() {
         .catch((err) => setError(getApiErrorMessage(err, t, t('common.errorSave'))))
         .finally(() => setLoading(false))
     }
-  }, [isAdmin, showAssignedTab])
+    // No incluir companies: provoca ciclo (companies se deriva de myList/assignedList para no-admin)
+    // Para admin, companyIdForFetch ya refleja el valor cuando companies carga
+  }, [isAdmin, showAssignedTab, listPage, pageSize, statusFilter, priorityFilter, companyFilter, companyIdForFetch])
+
+  useEffect(() => {
+    if (isAdmin) setListPage(0)
+  }, [statusFilter, priorityFilter, companyFilter, pageSize, isAdmin])
 
   useEffect(() => {
     if (isAdmin) {
@@ -143,8 +168,8 @@ export default function RequestList() {
     ? (tab === 'assigned' ? assignedList : list)
     : (tab === 'assigned' ? assignedList : myList)
   const filteredList = useMemo(
-    () => filterRequests(displayList, statusFilter, priorityFilter, companyFilter),
-    [displayList, statusFilter, priorityFilter, companyFilter]
+    () => (isAdmin && tab === 'all' ? list : filterRequests(displayList, statusFilter, priorityFilter, companyFilter)),
+    [isAdmin, tab, list, displayList, statusFilter, priorityFilter, companyFilter]
   )
 
   const FilterBar = () => (
@@ -255,6 +280,27 @@ export default function RequestList() {
             </button>
           </div>
           <RequestTable list={filteredList} />
+          {isAdmin && tab === 'all' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-lg)', marginTop: 'var(--spacing-md)', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing)' }}>
+                <label style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>{t('common.perPage')}</label>
+                <select
+                  className="input"
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  style={{ width: 'auto', minWidth: 70 }}
+                  data-testid="requests-per-page"
+                >
+                  {PAGE_SIZE_OPTIONS.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+              {listTotalPages > 1 && (
+                <Pagination page={listPage} totalPages={listTotalPages} onPageChange={setListPage} />
+              )}
+            </div>
+          )}
         </>
       ) : (
         <RequestTable list={filteredList} />

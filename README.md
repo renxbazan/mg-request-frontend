@@ -38,7 +38,7 @@ Abre http://localhost:3000. El proxy enviará las peticiones a `/api/*` al backe
 npm run build
 ```
 
-La salida queda en `dist/`. Para producción puedes servirla con cualquier servidor estático o desplegarla en S3 + CloudFront.
+La salida queda en `dist/`. Para producción puedes servirla con cualquier servidor estático o desplegarla en S3 + CloudFront. Ver `docs/DEPLOY-AWS.md` para instrucciones de despliegue en AWS.
 
 ## Tests E2E (Playwright)
 

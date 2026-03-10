@@ -18,13 +18,25 @@
     "persons": "Personas",
     "users": "Usuarios",
     "myAccount": "Mi cuenta",
+    "settings": "Configuración",
     "logout": "Salir"
   },
   "login": {
     "title": "MG Request",
+    "titleText": "Request",
     "subtitle": "Iniciar sesión",
+    "signInToContinue": "Inicia sesión para continuar",
     "username": "Usuario",
     "password": "Contraseña",
+    "usernamePlaceholder": "tu@email.com",
+    "passwordPlaceholder": "Tu contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "rememberMe": "Recordarme",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "forgotPasswordTitle": "Recuperar contraseña",
+    "forgotPasswordMessage": "Contacta al administrador de tu empresa para recuperar el acceso a tu cuenta.",
+    "backToLogin": "Volver al login",
     "submit": "Entrar",
     "submitting": "Entrando...",
     "error": "Error al iniciar sesión"
@@ -48,7 +60,11 @@
     "errorDelete": "Error al eliminar",
     "forbidden": "No tiene permiso para realizar esta acción.",
     "new": "Nuevo",
-    "back": "Volver"
+    "back": "Volver",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página",
+    "perPage": "por página"
   },
   "home": {
     "welcome": "Bienvenido, {{username}}",
@@ -56,6 +72,27 @@
     "viewRequests": "Ver solicitudes",
     "newRequest": "Nueva solicitud",
     "catalogs": "Catálogos"
+  },
+  "dashboard": {
+    "dateRange": "Período",
+    "thisMonth": "Mes actual",
+    "lastMonth": "Mes anterior",
+    "last3Months": "Últimos 3 meses",
+    "last6Months": "Últimos 6 meses",
+    "thisYear": "Año actual",
+    "lastYear": "Año anterior",
+    "all": "Todo",
+    "byStatus": "Por estado",
+    "byPriority": "Por prioridad",
+    "ratingsByWorker": "Calificaciones por worker",
+    "count": "Cantidad",
+    "ratedRequests": "Solicitudes valoradas",
+    "noData": "Aún no hay solicitudes en el período seleccionado.",
+    "noRatings": "Sin calificaciones aún.",
+    "byCompanyAndSite": "Por empresa y sitio",
+    "company": "Empresa",
+    "site": "Sitio",
+    "total": "Total"
   },
   "companies": {
     "title": "Empresas",
@@ -213,7 +250,10 @@
     "priorityHigh": "Alta",
     "createRequest": "Crear solicitud",
     "saving": "Guardando...",
-    "errorCreate": "Error al crear"
+    "errorCreate": "Error al crear",
+    "photos": "Fotos",
+    "addPhotos": "Añadir fotos",
+    "photosHint": "Máximo {{max}} fotos. En el móvil puedes tomar una foto."
   },
   "changePassword": {
     "title": "Cambiar mi contraseña",

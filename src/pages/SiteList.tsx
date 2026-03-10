@@ -5,6 +5,7 @@ import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
+import IconButton from '../components/IconButton'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
 
@@ -122,7 +123,7 @@ export default function SiteList() {
       {list.length === 0 ? (
         <Card><p style={{ margin: 0 }}>{t('sites.noItems')}</p></Card>
       ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
+        <Card style={{ padding: 0, overflow: 'visible' }}>
           <div className="table-responsive">
             <table>
               <thead>
@@ -142,8 +143,10 @@ export default function SiteList() {
                     <td>{s.description ?? '-'}</td>
                     <td>{s.companyId != null ? (companyById[s.companyId]?.name ?? s.companyId) : '-'}</td>
                     <td>
-                      <Button variant="secondary" onClick={() => openEdit(s)} style={{ marginRight: 8, padding: '6px 12px' }}>{t('common.edit')}</Button>
-                      <Button variant="danger" onClick={() => handleDelete(s)} style={{ padding: '6px 12px' }}>{t('common.delete')}</Button>
+                      <div className="table-actions">
+                        <IconButton icon="edit" title={t('common.edit')} variant="secondary" onClick={() => openEdit(s)} />
+                        <IconButton icon="delete" title={t('common.delete')} variant="danger" onClick={() => handleDelete(s)} />
+                      </div>
                     </td>
                   </tr>
                 ))}

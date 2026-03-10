@@ -10,6 +10,7 @@ import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
+import IconButton from '../components/IconButton'
 import FormField from '../components/FormField'
 import Autocomplete from '../components/Autocomplete'
 import Modal from '../components/Modal'
@@ -211,7 +212,7 @@ export default function UserList() {
       {list.length === 0 ? (
         <Card><p style={{ margin: 0 }}>{t('users.noItems')}</p></Card>
       ) : (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
+        <Card style={{ padding: 0, overflow: 'visible' }}>
           <div className="table-responsive">
             <table>
               <thead>
@@ -240,9 +241,9 @@ export default function UserList() {
                       <td>{u.locale === 'en' ? t('users.languageEn') : t('users.languageEs')}</td>
                       <td className="td-actions">
                         <div className="table-actions">
-                          <Button variant="secondary" onClick={() => openEditModal(u)} className="btn-sm">{t('common.edit')}</Button>
-                          <Button variant="secondary" onClick={() => openPasswordModal(u.id)} className="btn-sm">{t('users.changePassword')}</Button>
-                          <Button variant="danger" onClick={() => handleDelete(u)} className="btn-sm">{t('common.delete')}</Button>
+                          <IconButton icon="edit" title={t('common.edit')} variant="secondary" onClick={() => openEditModal(u)} />
+                          <IconButton icon="key" title={t('users.changePassword')} variant="secondary" onClick={() => openPasswordModal(u.id)} />
+                          <IconButton icon="delete" title={t('common.delete')} variant="danger" onClick={() => handleDelete(u)} />
                         </div>
                       </td>
                     </tr>
