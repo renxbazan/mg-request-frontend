@@ -104,7 +104,15 @@
     "noItems": "No companies.",
     "type": "Type",
     "typeCompany": "Company",
-    "typeSchool": "School"
+    "typeSchool": "School",
+    "approvers": "Approvers",
+    "approversTitle": "Approvers for {{name}}",
+    "approversList": "Current approvers",
+    "addApprover": "Add as approver",
+    "addApproverSection": "Add approver",
+    "removeApprover": "Remove as approver",
+    "noApprovers": "No approvers assigned.",
+    "noUsersToAdd": "No other company users to add as approvers."
   },
   "sites": {
     "title": "Sites",

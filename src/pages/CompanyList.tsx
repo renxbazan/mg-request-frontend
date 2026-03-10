@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { catalogsApi, CompanyDto, CompanyCreateDto } from '../api/catalogs'
+import { usersApi, UserDto } from '../api/users'
 import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
@@ -8,6 +9,9 @@ import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
+
+const COMPANY_ADMIN_PROFILE_ID = 3
+const REQUESTER_PROFILE_ID = 2
 
 export default function CompanyList() {
   const { t } = useTranslation()
@@ -18,6 +22,10 @@ export default function CompanyList() {
   const [form, setForm] = useState<CompanyCreateDto>({ name: '', description: '', companyType: 'COMPANY' })
   const [editingItem, setEditingItem] = useState<CompanyDto | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
+  const [companyApprovers, setCompanyApprovers] = useState<CompanyDto | null>(null)
+  const [companyUsers, setCompanyUsers] = useState<UserDto[]>([])
+  const [approversLoading, setApproversLoading] = useState(false)
+  const [approverActionLoading, setApproverActionLoading] = useState<number | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -80,6 +88,57 @@ export default function CompanyList() {
     }
   }
 
+  const openApprovers = (c: CompanyDto) => {
+    setCompanyApprovers(c)
+    setCompanyUsers([])
+    setApproversLoading(true)
+    setError('')
+    usersApi
+      .list(c.id)
+      .then(setCompanyUsers)
+      .catch((err) => setError(getApiErrorMessage(err, t, t('common.errorSave'))))
+      .finally(() => setApproversLoading(false))
+  }
+
+  const closeApproversModal = () => {
+    setCompanyApprovers(null)
+    setCompanyUsers([])
+    setApproverActionLoading(null)
+  }
+
+  const addApprover = async (user: UserDto) => {
+    setApproverActionLoading(user.id)
+    setError('')
+    try {
+      await usersApi.update(user.id, { profileId: COMPANY_ADMIN_PROFILE_ID })
+      setCompanyUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, profileId: COMPANY_ADMIN_PROFILE_ID } : u))
+      )
+    } catch (err) {
+      setError(getApiErrorMessage(err, t, t('common.errorSave')))
+    } finally {
+      setApproverActionLoading(null)
+    }
+  }
+
+  const removeApprover = async (user: UserDto) => {
+    setApproverActionLoading(user.id)
+    setError('')
+    try {
+      await usersApi.update(user.id, { profileId: REQUESTER_PROFILE_ID })
+      setCompanyUsers((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, profileId: REQUESTER_PROFILE_ID } : u))
+      )
+    } catch (err) {
+      setError(getApiErrorMessage(err, t, t('common.errorSave')))
+    } finally {
+      setApproverActionLoading(null)
+    }
+  }
+
+  const approversList = companyUsers.filter((u) => u.profileId === COMPANY_ADMIN_PROFILE_ID)
+  const nonApproversList = companyUsers.filter((u) => u.profileId !== COMPANY_ADMIN_PROFILE_ID)
+
   if (loading) return <p>{t('companies.loading')}</p>
 
   return (
@@ -115,6 +174,7 @@ export default function CompanyList() {
                     <td>
                       <div className="table-actions">
                         <IconButton icon="edit" title={t('common.edit')} variant="secondary" onClick={() => openEdit(c)} />
+                        <IconButton icon="userPlus" title={t('companies.approvers')} variant="secondary" onClick={() => openApprovers(c)} data-testid={`company-approvers-${c.id}`} />
                         <IconButton icon="delete" title={t('common.delete')} variant="danger" onClick={() => handleDelete(c)} />
                       </div>
                     </td>
@@ -168,6 +228,64 @@ export default function CompanyList() {
             </select>
           </FormField>
         </form>
+      </Modal>
+
+      <Modal
+        open={companyApprovers != null}
+        onClose={closeApproversModal}
+        title={companyApprovers ? t('companies.approversTitle', { name: companyApprovers.name }) : ''}
+        footer={
+          <Button type="button" variant="ghost" onClick={closeApproversModal} data-testid="approvers-modal-close">
+            {t('common.close')}
+          </Button>
+        }
+      >
+        {approversLoading ? (
+          <p>{t('common.loading')}</p>
+        ) : (
+          <>
+            <h3 style={{ fontSize: '1rem', marginTop: 0, marginBottom: 'var(--spacing-md)' }}>{t('companies.approversList')}</h3>
+            {approversList.length === 0 ? (
+              <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-lg)' }}>{t('companies.noApprovers')}</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg)' }}>
+                {approversList.map((u) => (
+                  <li key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--spacing-sm) 0', borderBottom: '1px solid var(--color-border, #eee)' }}>
+                    <span>{u.username}</span>
+                    <Button
+                      variant="ghost"
+                      disabled={approverActionLoading === u.id}
+                      onClick={() => removeApprover(u)}
+                      data-testid={`remove-approver-${u.id}`}
+                    >
+                      {t('companies.removeApprover')}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <h3 style={{ fontSize: '1rem', marginBottom: 'var(--spacing-md)' }}>{t('companies.addApproverSection')}</h3>
+            {nonApproversList.length === 0 ? (
+              <p style={{ color: 'var(--color-text-muted)' }}>{t('companies.noUsersToAdd')}</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {nonApproversList.map((u) => (
+                  <li key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--spacing-sm) 0', borderBottom: '1px solid var(--color-border, #eee)' }}>
+                    <span>{u.username}</span>
+                    <Button
+                      variant="secondary"
+                      disabled={approverActionLoading === u.id}
+                      onClick={() => addApprover(u)}
+                      data-testid={`add-approver-${u.id}`}
+                    >
+                      {t('companies.addApprover')}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </Modal>
     </div>
   )

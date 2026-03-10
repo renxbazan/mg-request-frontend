@@ -1,6 +1,5 @@
 import { useMemo, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { requestsApi, RequestDto } from '../api/requests'
 import { catalogsApi } from '../api/catalogs'
 import { useAuth } from '../auth/AuthContext'

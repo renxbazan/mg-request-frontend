@@ -302,8 +302,8 @@ export default function Home() {
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 12 }} />
                     <Tooltip
-                      formatter={(value: number, _: unknown, props: { payload: { avgRating: number } }) => [
-                        `${value} (avg: ${props.payload.avgRating})`,
+                      formatter={(value: number, _: unknown, item) => [
+                        `${value} (avg: ${(item?.payload as { avgRating?: number })?.avgRating ?? value})`,
                         t('dashboard.ratedRequests'),
                       ]}
                     />

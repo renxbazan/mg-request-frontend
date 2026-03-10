@@ -28,6 +28,7 @@ export interface RequestDto {
   companyName?: string | null
   requesterName?: string | null
   assignedStaffName?: string | null
+  assignedUserId?: number | null
   canRate?: boolean
   rating?: number | null
   requestStatus: RequestStatus

@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { requestsApi, requestAssignmentsApi, RequestDto, RequestStatus } from '../api/requests'
 import { usersApi } from '../api/users'
 import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
+
+const SUPER_ADMIN_PROFILE_ID = 1
+const COMPANY_ADMIN_PROFILE_ID = 3
+const WORKER_PROFILE_ID = 4
 import Card from '../components/Card'
 import Button from '../components/Button'
 import FormField from '../components/FormField'
@@ -34,6 +39,7 @@ function Badge({ statusLabel, status, priority }: { statusLabel: string; status:
 
 export default function RequestDetail() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [request, setRequest] = useState<RequestDto | null>(null)
@@ -92,6 +98,12 @@ export default function RequestDetail() {
   const status: RequestStatus = request.requestStatus
   const statusLabel = STATUS_KEYS[status] ? t(STATUS_KEYS[status]) : status
 
+  const canApproveReject = user && (user.profileId === COMPANY_ADMIN_PROFILE_ID || user.profileId === SUPER_ADMIN_PROFILE_ID)
+  const canAssign = user && user.profileId === SUPER_ADMIN_PROFILE_ID
+  const isAssignedToCurrentUser = user && request.assignedUserId != null && request.assignedUserId === user.userId
+  const canAttendOrClose = user && (user.profileId === SUPER_ADMIN_PROFILE_ID || (user.profileId === WORKER_PROFILE_ID && isAssignedToCurrentUser))
+  const canRate = Boolean(request.canRate && user && user.profileId !== WORKER_PROFILE_ID)
+
   return (
     <div>
       <PageHeader
@@ -138,7 +150,7 @@ export default function RequestDetail() {
 
       <h2 style={{ fontSize: '1.1rem', marginBottom: 'var(--spacing-md)' }}>{t('common.actions')}</h2>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing)', marginBottom: 'var(--spacing-lg)' }}>
-        {status === 'PENDING_APPROVAL' && (
+        {status === 'PENDING_APPROVAL' && canApproveReject && (
           <>
             <Button variant="success" disabled={actionLoading} onClick={() => doAction(() => requestsApi.approve(requestId))} data-testid="request-approve">
               {t('requests.approve')}
@@ -148,7 +160,7 @@ export default function RequestDetail() {
             </Button>
           </>
         )}
-        {status === 'CREATED' && (
+        {status === 'CREATED' && canAssign && (
           <>
             {!showAssign ? (
               <Button variant="secondary" onClick={() => setShowAssign(true)} data-testid="request-assign">
@@ -176,12 +188,12 @@ export default function RequestDetail() {
             )}
           </>
         )}
-        {status === 'ASSIGNED' && (
+        {status === 'ASSIGNED' && canAttendOrClose && (
           <Button variant="secondary" disabled={actionLoading} onClick={() => doAction(() => requestsApi.attend(requestId))} data-testid="request-attend">
             {t('requests.inTransit')}
           </Button>
         )}
-        {status === 'IN_TRANSIT' && (
+        {status === 'IN_TRANSIT' && canAttendOrClose && (
           <>
             {!showClose ? (
               <Button variant="success" onClick={() => setShowClose(true)} data-testid="request-close">
@@ -206,10 +218,10 @@ export default function RequestDetail() {
             )}
           </>
         )}
-        {status === 'DONE' && !request.canRate && (
+        {status === 'DONE' && !canRate && (
           <span style={{ color: 'var(--color-text-muted)' }}>{t('requests.noMoreActions')}</span>
         )}
-        {status === 'DONE' && request.canRate && (
+        {status === 'DONE' && canRate && (
           <>
             {!showRate ? (
               <Button variant="secondary" onClick={() => setShowRate(true)} data-testid="request-rate">
@@ -238,6 +250,9 @@ export default function RequestDetail() {
           </>
         )}
         {(status === 'RATED' || status === 'REJECTED') && (
+          <span style={{ color: 'var(--color-text-muted)' }}>{t('requests.noMoreActions')}</span>
+        )}
+        {((status === 'PENDING_APPROVAL' && !canApproveReject) || (status === 'CREATED' && !canAssign) || (status === 'ASSIGNED' && !canAttendOrClose) || (status === 'IN_TRANSIT' && !canAttendOrClose)) && (
           <span style={{ color: 'var(--color-text-muted)' }}>{t('requests.noMoreActions')}</span>
         )}
       </div>

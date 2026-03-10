@@ -104,7 +104,15 @@
     "noItems": "No hay empresas.",
     "type": "Tipo",
     "typeCompany": "Empresa",
-    "typeSchool": "Escuela"
+    "typeSchool": "Escuela",
+    "approvers": "Aprobadores",
+    "approversTitle": "Aprobadores de {{name}}",
+    "approversList": "Aprobadores actuales",
+    "addApprover": "Agregar como aprobador",
+    "addApproverSection": "Agregar aprobador",
+    "removeApprover": "Quitar como aprobador",
+    "noApprovers": "No hay aprobadores asignados.",
+    "noUsersToAdd": "No hay más usuarios de la empresa para agregar como aprobadores."
   },
   "sites": {
     "title": "Sitios",
