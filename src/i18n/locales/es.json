@@ -112,7 +112,12 @@
     "addApproverSection": "Agregar aprobador",
     "removeApprover": "Quitar como aprobador",
     "noApprovers": "No hay aprobadores asignados.",
-    "noUsersToAdd": "No hay más usuarios de la empresa para agregar como aprobadores."
+    "noUsersToAdd": "No hay más usuarios de la empresa para agregar como aprobadores.",
+    "approversCompanyLevel": "Aprobadores de toda la empresa",
+    "addApproverCompanyHint": "Los siguientes usuarios pueden recibir solicitudes de toda la empresa al añadirlos como aprobadores.",
+    "approversBySite": "Aprobadores por sitio",
+    "noSites": "Esta empresa no tiene sitios.",
+    "selectUserToAdd": "Seleccionar usuario"
   },
   "sites": {
     "title": "Sitios",

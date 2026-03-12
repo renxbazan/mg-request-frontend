@@ -112,7 +112,12 @@
     "addApproverSection": "Add approver",
     "removeApprover": "Remove as approver",
     "noApprovers": "No approvers assigned.",
-    "noUsersToAdd": "No other company users to add as approvers."
+    "noUsersToAdd": "No other company users to add as approvers.",
+    "approversCompanyLevel": "Company-level approvers",
+    "addApproverCompanyHint": "Add users below to receive approval requests for the whole company.",
+    "approversBySite": "Approvers by site",
+    "noSites": "This company has no sites.",
+    "selectUserToAdd": "Select user"
   },
   "sites": {
     "title": "Sites",

@@ -9,9 +9,11 @@ export interface ModalProps {
   children: React.ReactNode
   /** Optional footer (e.g. Cancel + Submit). If not provided, a default Close button is shown. */
   footer?: React.ReactNode
+  /** Optional max width in px (default 480). Use for content-heavy modals (e.g. approvers). */
+  maxWidth?: number
 }
 
-export default function Modal({ open, onClose, title, children, footer }: ModalProps) {
+export default function Modal({ open, onClose, title, children, footer, maxWidth = 480 }: ModalProps) {
   const { t } = useTranslation()
   useEffect(() => {
     if (!open) return
@@ -55,7 +57,7 @@ export default function Modal({ open, onClose, title, children, footer }: ModalP
           background: 'var(--color-bg, #fff)',
           borderRadius: 'var(--radius, 6px)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-          maxWidth: 480,
+          maxWidth,
           width: '100%',
           maxHeight: '90vh',
           overflow: 'hidden',

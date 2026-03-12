@@ -12,6 +12,7 @@ export interface SiteDto {
   name: string
   description: string | null
   companyId: number
+  companyName?: string | null
 }
 
 export interface ServiceCategoryDto {
@@ -50,12 +51,34 @@ export interface ServiceSubCategoryCreateDto {
   serviceCategoryId: number
 }
 
+export interface RequestApproverDto {
+  id: number
+  userId: number
+  userName: string
+  scope: 'COMPANY' | 'SITE'
+  companyId: number
+  siteId?: number | null
+  siteName?: string | null
+}
+
 export const catalogsApi = {
   companies: () => api.get<CompanyDto[]>('/api/companies'),
   getCompany: (id: number) => api.get<CompanyDto>(`/api/companies/${id}`),
   createCompany: (body: CompanyCreateDto) => api.post<CompanyDto>('/api/companies', body),
   updateCompany: (id: number, body: CompanyCreateDto) => api.put<CompanyDto>(`/api/companies/${id}`, body),
   deleteCompany: (id: number) => api.delete(`/api/companies/${id}`),
+
+  listApprovers: (companyId: number) =>
+    api.get<RequestApproverDto[]>(`/api/companies/${companyId}/approvers`),
+  addApprover: (companyId: number, body: { userId: number; scope: 'COMPANY' | 'SITE'; siteId?: number }) =>
+    api.post<RequestApproverDto>(`/api/companies/${companyId}/approvers`, body),
+  removeApprover: (companyId: number, userId: number, params?: { companyLevel?: boolean; siteId?: number }) => {
+    const search = new URLSearchParams()
+    search.set('userId', String(userId))
+    if (params?.companyLevel !== undefined) search.set('companyLevel', String(params.companyLevel))
+    if (params?.siteId !== undefined) search.set('siteId', String(params.siteId))
+    return api.delete(`/api/companies/${companyId}/approvers?${search}`)
+  },
 
   sites: (companyId?: number) =>
     api.get<SiteDto[]>(companyId != null ? `/api/sites?companyId=${companyId}` : '/api/sites'),

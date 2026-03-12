@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { catalogsApi, CompanyDto, CompanyCreateDto } from '../api/catalogs'
+import { catalogsApi, CompanyDto, CompanyCreateDto, RequestApproverDto, SiteDto } from '../api/catalogs'
 import { usersApi, UserDto } from '../api/users'
 import { getApiErrorMessage } from '../utils/apiUtils'
 import PageHeader from '../components/PageHeader'
@@ -9,9 +9,6 @@ import Button from '../components/Button'
 import IconButton from '../components/IconButton'
 import FormField from '../components/FormField'
 import Modal from '../components/Modal'
-
-const COMPANY_ADMIN_PROFILE_ID = 3
-const REQUESTER_PROFILE_ID = 2
 
 export default function CompanyList() {
   const { t } = useTranslation()
@@ -24,8 +21,12 @@ export default function CompanyList() {
   const [modalOpen, setModalOpen] = useState(false)
   const [companyApprovers, setCompanyApprovers] = useState<CompanyDto | null>(null)
   const [companyUsers, setCompanyUsers] = useState<UserDto[]>([])
+  const [approversList, setApproversList] = useState<RequestApproverDto[]>([])
+  const [companySites, setCompanySites] = useState<SiteDto[]>([])
   const [approversLoading, setApproversLoading] = useState(false)
-  const [approverActionLoading, setApproverActionLoading] = useState<number | null>(null)
+  const [approverActionLoading, setApproverActionLoading] = useState<string | null>(null)
+  const [selectedAddCompanyUserId, setSelectedAddCompanyUserId] = useState<string>('')
+  const [selectedAddBySite, setSelectedAddBySite] = useState<Record<number, string>>({})
 
   const load = () => {
     setLoading(true)
@@ -91,11 +92,20 @@ export default function CompanyList() {
   const openApprovers = (c: CompanyDto) => {
     setCompanyApprovers(c)
     setCompanyUsers([])
+    setApproversList([])
+    setCompanySites([])
     setApproversLoading(true)
     setError('')
-    usersApi
-      .list(c.id)
-      .then(setCompanyUsers)
+    Promise.all([
+      usersApi.list(c.id),
+      catalogsApi.listApprovers(c.id),
+      catalogsApi.sites(c.id),
+    ])
+      .then(([users, approvers, sites]) => {
+        setCompanyUsers(users)
+        setApproversList(approvers)
+        setCompanySites(sites)
+      })
       .catch((err) => setError(getApiErrorMessage(err, t, t('common.errorSave'))))
       .finally(() => setApproversLoading(false))
   }
@@ -103,17 +113,26 @@ export default function CompanyList() {
   const closeApproversModal = () => {
     setCompanyApprovers(null)
     setCompanyUsers([])
+    setApproversList([])
+    setCompanySites([])
     setApproverActionLoading(null)
+    setSelectedAddCompanyUserId('')
+    setSelectedAddBySite({})
   }
 
-  const addApprover = async (user: UserDto) => {
-    setApproverActionLoading(user.id)
+  const refreshApprovers = () => {
+    if (!companyApprovers) return
+    catalogsApi.listApprovers(companyApprovers.id).then(setApproversList)
+  }
+
+  const addApproverCompany = async (user: UserDto) => {
+    if (!companyApprovers) return
+    const key = `company-${user.id}`
+    setApproverActionLoading(key)
     setError('')
     try {
-      await usersApi.update(user.id, { profileId: COMPANY_ADMIN_PROFILE_ID })
-      setCompanyUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, profileId: COMPANY_ADMIN_PROFILE_ID } : u))
-      )
+      await catalogsApi.addApprover(companyApprovers.id, { userId: user.id, scope: 'COMPANY' })
+      refreshApprovers()
     } catch (err) {
       setError(getApiErrorMessage(err, t, t('common.errorSave')))
     } finally {
@@ -121,14 +140,14 @@ export default function CompanyList() {
     }
   }
 
-  const removeApprover = async (user: UserDto) => {
-    setApproverActionLoading(user.id)
+  const addApproverSite = async (user: UserDto, siteId: number) => {
+    if (!companyApprovers) return
+    const key = `site-${siteId}-${user.id}`
+    setApproverActionLoading(key)
     setError('')
     try {
-      await usersApi.update(user.id, { profileId: REQUESTER_PROFILE_ID })
-      setCompanyUsers((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, profileId: REQUESTER_PROFILE_ID } : u))
-      )
+      await catalogsApi.addApprover(companyApprovers.id, { userId: user.id, scope: 'SITE', siteId })
+      refreshApprovers()
     } catch (err) {
       setError(getApiErrorMessage(err, t, t('common.errorSave')))
     } finally {
@@ -136,8 +155,61 @@ export default function CompanyList() {
     }
   }
 
-  const approversList = companyUsers.filter((u) => u.profileId === COMPANY_ADMIN_PROFILE_ID)
-  const nonApproversList = companyUsers.filter((u) => u.profileId !== COMPANY_ADMIN_PROFILE_ID)
+  const removeApproverCompany = async (a: RequestApproverDto) => {
+    if (!companyApprovers) return
+    const key = `rm-company-${a.userId}`
+    setApproverActionLoading(key)
+    setError('')
+    try {
+      await catalogsApi.removeApprover(companyApprovers.id, a.userId, { companyLevel: true })
+      refreshApprovers()
+    } catch (err) {
+      setError(getApiErrorMessage(err, t, t('common.errorSave')))
+    } finally {
+      setApproverActionLoading(null)
+    }
+  }
+
+  const removeApproverSite = async (a: RequestApproverDto) => {
+    if (!companyApprovers || a.siteId == null) return
+    const key = `rm-site-${a.siteId}-${a.userId}`
+    setApproverActionLoading(key)
+    setError('')
+    try {
+      await catalogsApi.removeApprover(companyApprovers.id, a.userId, { siteId: a.siteId })
+      refreshApprovers()
+    } catch (err) {
+      setError(getApiErrorMessage(err, t, t('common.errorSave')))
+    } finally {
+      setApproverActionLoading(null)
+    }
+  }
+
+  const companyLevelApprovers = approversList.filter((a) => a.scope === 'COMPANY')
+  const siteLevelApproversBySite = companySites.map((site) => ({
+    site,
+    approvers: approversList.filter((a) => a.scope === 'SITE' && a.siteId === site.id),
+  }))
+  const companyLevelUserIds = new Set(companyLevelApprovers.map((a) => a.userId))
+  const usersAvailableForCompany = companyUsers.filter((u) => !companyLevelUserIds.has(u.id))
+
+  const handleAddCompanyApprover = () => {
+    const id = selectedAddCompanyUserId ? Number(selectedAddCompanyUserId) : 0
+    const user = companyUsers.find((u) => u.id === id)
+    if (user && companyApprovers) {
+      addApproverCompany(user)
+      setSelectedAddCompanyUserId('')
+    }
+  }
+
+  const handleAddSiteApprover = (siteId: number) => {
+    const id = selectedAddBySite[siteId] ? Number(selectedAddBySite[siteId]) : 0
+    const user = companyUsers.find((u) => u.id === id)
+    if (user && companyApprovers) {
+      addApproverSite(user, siteId)
+      setSelectedAddBySite((prev) => ({ ...prev, [siteId]: '' }))
+    }
+  }
 
   if (loading) return <p>{t('companies.loading')}</p>
 
@@ -234,6 +306,7 @@ export default function CompanyList() {
         open={companyApprovers != null}
         onClose={closeApproversModal}
         title={companyApprovers ? t('companies.approversTitle', { name: companyApprovers.name }) : ''}
+        maxWidth={560}
         footer={
           <Button type="button" variant="ghost" onClick={closeApproversModal} data-testid="approvers-modal-close">
             {t('common.close')}
@@ -243,48 +316,145 @@ export default function CompanyList() {
         {approversLoading ? (
           <p>{t('common.loading')}</p>
         ) : (
-          <>
-            <h3 style={{ fontSize: '1rem', marginTop: 0, marginBottom: 'var(--spacing-md)' }}>{t('companies.approversList')}</h3>
-            {approversList.length === 0 ? (
-              <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-lg)' }}>{t('companies.noApprovers')}</p>
-            ) : (
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-lg)' }}>
-                {approversList.map((u) => (
-                  <li key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--spacing-sm) 0', borderBottom: '1px solid var(--color-border, #eee)' }}>
-                    <span>{u.username}</span>
-                    <Button
-                      variant="ghost"
-                      disabled={approverActionLoading === u.id}
-                      onClick={() => removeApprover(u)}
-                      data-testid={`remove-approver-${u.id}`}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+            {/* Sección: Aprobadores de toda la empresa */}
+            <section style={{ paddingBottom: 'var(--spacing-lg)', borderBottom: '1px solid var(--color-border, #eee)' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: '0 0 var(--spacing-md)', color: 'var(--color-text)' }}>
+                {t('companies.approversCompanyLevel')}
+              </h3>
+              {companyLevelApprovers.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-muted)' }}>{t('companies.noApprovers')}</p>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing-md)' }}>
+                  {companyLevelApprovers.map((a) => (
+                    <li
+                      key={`company-${a.userId}`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: 'var(--spacing-sm) 0',
+                        borderBottom: '1px solid var(--color-border, #eee)',
+                      }}
                     >
-                      {t('companies.removeApprover')}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <h3 style={{ fontSize: '1rem', marginBottom: 'var(--spacing-md)' }}>{t('companies.addApproverSection')}</h3>
-            {nonApproversList.length === 0 ? (
-              <p style={{ color: 'var(--color-text-muted)' }}>{t('companies.noUsersToAdd')}</p>
-            ) : (
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {nonApproversList.map((u) => (
-                  <li key={u.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--spacing-sm) 0', borderBottom: '1px solid var(--color-border, #eee)' }}>
-                    <span>{u.username}</span>
-                    <Button
-                      variant="secondary"
-                      disabled={approverActionLoading === u.id}
-                      onClick={() => addApprover(u)}
-                      data-testid={`add-approver-${u.id}`}
-                    >
-                      {t('companies.addApprover')}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+                      <span style={{ fontSize: 14 }}>{a.userName}</span>
+                      <IconButton
+                        icon="delete"
+                        title={t('companies.removeApprover')}
+                        variant="ghost"
+                        disabled={approverActionLoading === `rm-company-${a.userId}`}
+                        onClick={() => removeApproverCompany(a)}
+                        data-testid={`remove-approver-${a.userId}`}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div style={{ display: 'flex', gap: 'var(--spacing)', alignItems: 'center', flexWrap: 'wrap' }}>
+                <select
+                  className="input"
+                  value={selectedAddCompanyUserId}
+                  onChange={(e) => setSelectedAddCompanyUserId(e.target.value)}
+                  style={{ flex: '1 1 140px', minWidth: 0 }}
+                  data-testid="approvers-add-company-select"
+                >
+                  <option value="">{t('companies.selectUserToAdd')}</option>
+                  {usersAvailableForCompany.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.username}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  variant="secondary"
+                  disabled={!selectedAddCompanyUserId || approverActionLoading !== null}
+                  onClick={handleAddCompanyApprover}
+                  data-testid="add-approver-company-btn"
+                >
+                  {t('companies.addApprover')}
+                </Button>
+              </div>
+              {usersAvailableForCompany.length === 0 && companyLevelApprovers.length > 0 && (
+                <p style={{ margin: 'var(--spacing) 0 0', fontSize: 13, color: 'var(--color-text-muted)' }}>
+                  {t('companies.noUsersToAdd')}
+                </p>
+              )}
+            </section>
+
+            {/* Sección: Por sitio */}
+            <section>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 600, margin: '0 0 var(--spacing-md)', color: 'var(--color-text)' }}>
+                {t('companies.approversBySite')}
+              </h3>
+              {companySites.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--color-text-muted)' }}>{t('companies.noSites')}</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
+                  {siteLevelApproversBySite.map(({ site, approvers }) => {
+                    const usersAvailableForSite = companyUsers.filter((u) => !approvers.some((a) => a.userId === u.id))
+                    return (
+                      <div
+                        key={site.id}
+                        style={{
+                          padding: 'var(--spacing-md)',
+                          background: 'var(--color-bg)',
+                          borderRadius: 'var(--radius)',
+                          border: '1px solid var(--color-border, #eee)',
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 'var(--spacing)', color: 'var(--color-primary)' }}>
+                          {site.name}
+                        </div>
+                        {approvers.length === 0 ? (
+                          <p style={{ margin: '0 0 var(--spacing)', fontSize: 13, color: 'var(--color-text-muted)' }}>{t('companies.noApprovers')}</p>
+                        ) : (
+                          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--spacing)' }}>
+                            {approvers.map((a) => (
+                              <li
+                                key={`site-${site.id}-${a.userId}`}
+                                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--spacing-sm) 0' }}
+                              >
+                                <span style={{ fontSize: 14 }}>{a.userName}</span>
+                                <IconButton
+                                  icon="delete"
+                                  title={t('common.delete')}
+                                  variant="ghost"
+                                  disabled={approverActionLoading === `rm-site-${site.id}-${a.userId}`}
+                                  onClick={() => removeApproverSite(a)}
+                                />
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        <div style={{ display: 'flex', gap: 'var(--spacing)', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <select
+                            className="input"
+                            value={selectedAddBySite[site.id] ?? ''}
+                            onChange={(e) => setSelectedAddBySite((prev) => ({ ...prev, [site.id]: e.target.value }))}
+                            style={{ flex: '1 1 120px', minWidth: 0 }}
+                          >
+                            <option value="">{t('companies.selectUserToAdd')}</option>
+                            {usersAvailableForSite.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                {u.username}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            variant="secondary"
+                            disabled={!selectedAddBySite[site.id] || approverActionLoading !== null}
+                            onClick={() => handleAddSiteApprover(site.id)}
+                          >
+                            {t('companies.addApprover')}
+                          </Button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          </div>
         )}
       </Modal>
     </div>

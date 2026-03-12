@@ -5,6 +5,7 @@ import imageCompression from 'browser-image-compression'
 import { requestsApi, RequestCreateDto } from '../api/requests'
 import { catalogsApi, SiteDto, ServiceCategoryDto, ServiceSubCategoryDto } from '../api/catalogs'
 import { getApiErrorMessage } from '../utils/apiUtils'
+import { useAuth } from '../auth/AuthContext'
 import PageHeader from '../components/PageHeader'
 import Card from '../components/Card'
 import Button from '../components/Button'
@@ -19,6 +20,7 @@ type ImagePreview = { file: File; preview: string }
 export default function RequestForm() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [sites, setSites] = useState<SiteDto[]>([])
   const [categories, setCategories] = useState<ServiceCategoryDto[]>([])
@@ -34,8 +36,10 @@ export default function RequestForm() {
     priority: 'M',
   })
 
+  const companyIdForSites = user?.companyId ?? undefined
+
   useEffect(() => {
-    Promise.all([catalogsApi.sites(), catalogsApi.serviceCategories()])
+    Promise.all([catalogsApi.sites(companyIdForSites), catalogsApi.serviceCategories()])
       .then(([s, c]) => {
         setSites(s)
         setCategories(c)
@@ -44,7 +48,7 @@ export default function RequestForm() {
       })
       .catch((err) => setError(getApiErrorMessage(err, t, t('common.errorSave'))))
       .finally(() => setLoading(false))
-  }, [])
+  }, [companyIdForSites])
 
   useEffect(() => {
     if (form.serviceCategoryId) {
@@ -123,7 +127,7 @@ export default function RequestForm() {
                 options={sites}
                 value={form.siteId}
                 onChange={(v) => setForm((f) => ({ ...f, siteId: v || 0 }))}
-                getOptionLabel={(s) => s.name}
+                getOptionLabel={(s) => (s.companyName ? `${s.companyName} — ${s.name}` : s.name)}
                 getOptionId={(s) => s.id}
                 filterPlaceholder={t('requests.searchSite')}
                 selectPlaceholder={t('common.select')}
